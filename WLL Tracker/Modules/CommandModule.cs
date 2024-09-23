@@ -12,22 +12,19 @@ namespace WLL_Tracker.Modules;
 
 public class CommandModule : InteractionModuleBase<SocketInteractionContext>
 {
-    // Dependencies can be accessed through Property injection, public properties with public setters will be set by the service provider
     public InteractionService Commands { get; set; }
 
     private InteractionHandler _handler;
 
-    // Constructor injection is also a valid way to access the dependencies
     public CommandModule(InteractionHandler handler)
     {
         _handler = handler;
     }
 
-    // [Group] will create a command group. [SlashCommand]s and [ComponentInteraction]s will be registered with the group prefix
     [CommandContextType(InteractionContextType.Guild)]
     [DefaultMemberPermissions(GuildPermission.ManageMessages)]
     [Group("tracker", "desc")]
-    public class GroupExample : InteractionModuleBase<SocketInteractionContext>
+    public class GroupSetup : InteractionModuleBase<SocketInteractionContext>
     {
         [SlashCommand("setup", "Initial setup of a tracker.")]
         public async Task SetupTracker(TrackerType type)
