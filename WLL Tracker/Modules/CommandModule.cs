@@ -27,12 +27,12 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
     public class GroupSetup : InteractionModuleBase<SocketInteractionContext>
     {
         [SlashCommand("setup", "Initial setup of a tracker.")]
-        public async Task SetupTracker(TrackerType type)
+        public async Task SetupTracker(TrackerType type, string location = "RR")
         {
             long seconds = (long)DateTime.UtcNow.Subtract(DateTime.UnixEpoch).TotalSeconds;
 
             var embed = new EmbedBuilder()
-                .WithTitle("RR Container Yard")
+                .WithTitle($"{location} Container Yard")
                 .WithDescription("Last Updated by " + Context.User.Mention + " <t:" + seconds + ":R>")
                 .AddField("Red", 0, true)
                 .AddField("Green", 0, true)
