@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using System.Xml.XPath;
+using WLL_Tracker.Logs;
 
 namespace WLL_Tracker;
 
@@ -226,10 +227,33 @@ public class InteractionHandler
             msgEmbed.Fields.Single(x => x.Name.ToLower() == "darkblue").Value = darkblue;
             msgEmbed.Fields.Single(x => x.Name.ToLower() == "white").Value = white;
 
-            await arg.UpdateAsync(x =>
+            try
             {
-                x.Embed = msgEmbed.Build();
-            });
+                await arg.UpdateAsync(x =>
+                {
+                    x.Embed = msgEmbed.Build();
+                });
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            finally
+            {
+                // Log event with updated fields, author, timestamp UTC
+
+                var location = arg.Message.Embeds.First().Title;
+
+                var log = new LogEvent(
+                    id: location,
+                    author: arg.User.Mention,
+                    updated: DateTime.UtcNow,
+                    changes: new List<string>()
+                    );
+
+                _ = log.SaveLog();
+            }
+            
         }
 
         /// Board

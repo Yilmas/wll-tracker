@@ -52,6 +52,38 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
 
             await RespondAsync(embed: embed.Build(), components: builder.Build());
         }
+
+        [SlashCommand("log", "Display recent log of activity.")]
+        public async Task TrackerLog(int rows, string messageId)
+        {
+            long seconds = (long)DateTime.UtcNow.Subtract(DateTime.UnixEpoch).TotalSeconds;
+
+            var msg = await Context.Channel.GetMessageAsync(ulong.Parse(messageId));
+            var location = msg.Embeds.First().Title.Split(' ')[0];
+
+            if (msg != null)
+            {
+                var embed = new EmbedBuilder()
+                .WithTitle($"Log for: {location}")
+                .WithDescription("Last Update <t:" + seconds + ":R>")
+                .WithFields(
+                    new EmbedFieldBuilder()
+                        .WithName("Log")
+                        .WithValue("location\nasd")
+                    )
+                .WithFooter("Brough to you by WLL Cannonsmoke");
+
+                await RespondAsync(embed: embed.Build());
+            }
+            else
+            {
+                await RespondAsync("No message with that Id.", ephemeral: true);
+                return;
+            }
+            
+        }
+
+
     }
 }
 
