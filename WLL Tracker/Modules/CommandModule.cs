@@ -24,6 +24,7 @@ public class CommandModule : InteractionModuleBase<SocketInteractionContext>
     }
 
     // [Group] will create a command group. [SlashCommand]s and [ComponentInteraction]s will be registered with the group prefix
+    [CommandContextType(InteractionContextType.Guild)]
     [DefaultMemberPermissions(GuildPermission.ManageMessages)]
     [Group("tracker", "desc")]
     public class GroupExample : InteractionModuleBase<SocketInteractionContext>
