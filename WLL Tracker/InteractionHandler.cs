@@ -20,7 +20,6 @@ public class InteractionHandler
     private readonly InteractionService _handler;
     private readonly IServiceProvider _services;
     private readonly IConfiguration _configuration;
-    private readonly ulong _guildId;
 
     public InteractionHandler(DiscordSocketClient client, InteractionService handler, IServiceProvider services, IConfiguration config)
     {
@@ -28,7 +27,6 @@ public class InteractionHandler
         _handler = handler;
         _services = services;
         _configuration = config;
-        _guildId = ulong.Parse(_configuration["guildId"]);
     }
 
     public async Task InitializeAsync()
@@ -54,7 +52,10 @@ public class InteractionHandler
     private async Task ReadyAsync()
     {
         //await _handler.RegisterCommandsGloballyAsync();
-        await _handler.RegisterCommandsToGuildAsync(guildId: _guildId, deleteMissing: true);
+        foreach (var item in _client.Guilds)
+        {
+            await _handler.RegisterCommandsToGuildAsync(guildId: item.Id, deleteMissing: true);
+        }
     }
 
     private async Task HandleInteraction(SocketInteraction interaction)
@@ -155,8 +156,14 @@ public class InteractionHandler
 
         if (arg.Data.CustomId == "btn-board-edit")
         {
-            var user = _client.GetGuild(_guildId).GetUser(arg.User.Id);
-            var channel = _client.GetGuild(_guildId).Channels.Single(x => x.Id == arg.ChannelId);
+            if (arg.GuildId == null) 
+            {
+                await arg.RespondAsync("Must be used in a guild.", ephemeral: true);
+                return;
+            }
+
+            var user = _client.GetGuild((ulong)arg.GuildId).GetUser(arg.User.Id);
+            var channel = _client.GetGuild((ulong)arg.GuildId).Channels.Single(x => x.Id == arg.ChannelId);
 
             // User must have ManageMessages or be a Veteran to edit the Board.
             if (user.Roles.Any(x => x.Name != "Veteran"))
