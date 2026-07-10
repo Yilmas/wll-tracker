@@ -28,19 +28,6 @@ namespace Dockhound.Components
         }
 
         /// <summary>
-        /// Builds the standard component row for a verify info message.
-        /// </summary>
-        public static MessageComponent BuildInfoComponents()
-        {
-            return new ComponentBuilder()
-                .WithButton(
-                    label: "Verify",
-                    customId: $"verify:metoo",
-                    style: ButtonStyle.Success)
-                .Build();
-        }
-
-        /// <summary>
         /// Builds the Components V2 direct message sent after a verification is approved.
         /// </summary>
         public static MessageComponent BuildApprovalDmComponents(
@@ -133,46 +120,59 @@ namespace Dockhound.Components
         }
 
         /// <summary>
-        /// Build an information embed for the "Verify" info card. Behaviour changes by AccessRestriction.
-        /// Restricted: show a warning that verification is restricted (no steps).
-        /// MembersOnly: show steps + a clear members-only notice.
-        /// Open: show full steps and guidance.
+        /// Builds the Components V2 verification information card.
         /// </summary>
-        public static Embed BuildInfoEmbed(string imageUrl, AccessRestriction restriction, string displayName, bool isSteamRequired)
+        public static MessageComponent BuildInfoV2Components(string? imageUrl, AccessRestriction restriction, string displayName, bool isSteamRequired)
         {
-            var eb = new EmbedBuilder()
-                .WithTitle("Looking to Verify?")
-                .WithColor(Color.Gold);
+            var guildName = string.IsNullOrWhiteSpace(displayName) ? "this server" : displayName;
+            var container = new ContainerBuilder()
+                .WithAccentColor(Color.Gold)
+                .WithTextDisplay("## Looking to Verify?");
 
-            switch (restriction)
+            if (restriction == AccessRestriction.Restricted)
             {
-                case AccessRestriction.Restricted:
-                    eb.WithDescription("⚠️ Verification is currently *restricted*. No verification is allowed at this time.");
-                    // keep the embed minimal for restricted mode
-                    break;
+                container.WithTextDisplay("⚠️ Verification is currently **restricted**. No verification is allowed at this time.");
+            }
+            else
+            {
+                var stepNumber = isSteamRequired ? 4 : 3;
+                var steps = $"1. Click **Verify** below\n2. Select `Colonial` or `Warden`" +
+                    (isSteamRequired ? "\n3. Provide your Steam profile URL or Steam64ID." : string.Empty) +
+                    $"\n{stepNumber}. Upload your `MAP SCREEN Screenshot`.";
 
-                case AccessRestriction.MembersOnly:
-                    eb.WithDescription($"Follow the steps below to get yourself verified.\n\u200B")
-                      .AddField("⚠️ Members Only!", $"⚠️ Verification is currently limited to {displayName} members!\n\u200B", false)
-                      .AddField("Steps to Verify", "1. Click the button below\n2. Select `Colonial` or `Warden`" + (isSteamRequired ? "\n3. Provide your Steam profile URL or Steam64ID." : "") + "\n"+(isSteamRequired ? "4" : "3")+". Upload your `MAP SCREEN Screenshot`\n", false)
-                      .AddField("**Required Screenshot**", "Map Screenshot **ONLY**\nYou will be **rejected** if you submit a screenshot of the Secure Map or from Home Region.", false)
-                      .AddField("\u200B​", "\u200B", false)
-                      .AddField("**How long will it take?**", "If you have given us the correct information, one of the officers will handle your request asap.", false);
-                    eb.WithImageUrl(string.IsNullOrWhiteSpace(imageUrl) ? null : imageUrl);
-                    break;
+                container.WithTextDisplay("Follow the steps below to get yourself verified.");
 
-                case AccessRestriction.Open:
-                default:
-                    eb.WithDescription("Follow the steps below to get yourself verified.")
-                      .AddField("Steps to Verify", "1. Click the button below\n2. Select `Colonial` or `Warden`" + (isSteamRequired ? "\n3. Provide your Steam profile URL or Steam64ID." : "") + "\n" + (isSteamRequired ? "4" : "3") + ". Upload your `MAP SCREEN Screenshot`\n", false)
-                      .AddField("**Required Screenshot**", "Map Screenshot **ONLY**\nYou will be **rejected** if you submit a screenshot of the Secure Map or from Home Region.", false)
-                      .AddField("\u200B​", "\u200B", false)
-                      .AddField("**How long will it take?**", "If you have given us the correct information, one of the officers will handle your request asap.", false);
-                    eb.WithImageUrl(string.IsNullOrWhiteSpace(imageUrl) ? null : imageUrl);
-                    break;
+                if (restriction == AccessRestriction.MembersOnly)
+                {
+                    container
+                        .WithSeparator()
+                        .WithTextDisplay("### ⚠️ Members only")
+                        .WithTextDisplay($"Verification is currently limited to **{guildName}** members.");
+                }
+
+                container
+                    .WithSeparator()
+                    .WithTextDisplay("### Steps to verify")
+                    .WithTextDisplay(steps)
+                    .WithSeparator()
+                    .WithTextDisplay("### Required screenshot")
+                    .WithTextDisplay("Map Screenshot **ONLY**. You will be **rejected** if you submit a screenshot of the Secure Map or from Home Region.")
+                    .WithSeparator()
+                    .WithTextDisplay("### How long will it take?")
+                    .WithTextDisplay("If you have given us the correct information, one of the officers will handle your request as soon as possible.");
+
+                if (!string.IsNullOrWhiteSpace(imageUrl))
+                    container.WithMediaGallery(new[] { imageUrl });
             }
 
-            return eb.Build();
+            container.WithActionRow(new[]
+            {
+                new ButtonBuilder("Verify", "verify:metoo", ButtonStyle.Success)
+            });
+
+            return new ComponentBuilderV2()
+                .WithContainer(container)
+                .Build();
         }
     }
 }

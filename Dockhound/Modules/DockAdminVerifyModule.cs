@@ -35,11 +35,11 @@ namespace Dockhound.Modules
                     var restriction = cfg.Verify?.RestrictedAccess?.CurrentRestrictionLevel ?? AccessRestriction.Open;
                     var steamRequired = cfg.Verify?.IsSteamRequired ?? false;
 
-                    var embedInfo = VerifyComponents.BuildInfoEmbed(imageUrl, restriction, displayName, steamRequired);
+                    var infoComponents = VerifyComponents.BuildInfoV2Components(imageUrl, restriction, displayName, steamRequired);
 
                     if (Context.Channel is IMessageChannel postChannel)
                     {
-                        var msg = await postChannel.SendMessageAsync(embed: embedInfo, components: VerifyComponents.BuildInfoComponents());
+                        var msg = await postChannel.SendMessageAsync(components: infoComponents);
 
                         await _guildSettingsService.UpdateRestrictedAccessAsync(
                             Context.Guild.Id,
@@ -53,7 +53,7 @@ namespace Dockhound.Modules
                         return;
                     }
 
-                    await FollowupAsync(embed: embedInfo, components: VerifyComponents.BuildInfoComponents(), ephemeral: true);
+                    await FollowupAsync(components: infoComponents, ephemeral: true);
                 }
 
                 [RequireUserPermission(GuildPermission.ManageGuild)]
@@ -87,9 +87,15 @@ namespace Dockhound.Modules
                                     var imageUrl = cfg.Verify.ImageUrl;
                                     var steamRequired = cfg.Verify.IsSteamRequired;
 
-                                    var infoEmbed = VerifyComponents.BuildInfoEmbed(imageUrl, accessLevel, displayName, steamRequired);
+                                    var infoComponents = VerifyComponents.BuildInfoV2Components(imageUrl, accessLevel, displayName, steamRequired);
+                                    var flags = (msg.Flags ?? MessageFlags.None) | MessageFlags.ComponentsV2;
 
-                                    await msg.ModifyAsync(m => m.Embeds = new[] { infoEmbed });
+                                    await msg.ModifyAsync(m =>
+                                    {
+                                        m.Embeds = Array.Empty<Embed>();
+                                        m.Components = infoComponents;
+                                        m.Flags = flags;
+                                    });
                                 }
                             }
                             catch
@@ -107,8 +113,8 @@ namespace Dockhound.Modules
                                 var imageUrl = cfg.Verify.ImageUrl;
                                 var steamRequired = cfg.Verify.IsSteamRequired;
 
-                                var infoEmbed = VerifyComponents.BuildInfoEmbed(imageUrl, accessLevel, displayName, steamRequired);
-                                var posted = await createChannel.SendMessageAsync(embed: infoEmbed, components: VerifyComponents.BuildInfoComponents());
+                                var infoComponents = VerifyComponents.BuildInfoV2Components(imageUrl, accessLevel, displayName, steamRequired);
+                                var posted = await createChannel.SendMessageAsync(components: infoComponents);
 
                                 await _guildSettingsService.UpdateRestrictedAccessAsync(
                                     Context.Guild.Id,
