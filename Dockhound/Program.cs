@@ -69,6 +69,7 @@ public class Program
             .AddSingleton<IVerificationHistoryService, VerificationHistoryService>()
             .AddSingleton<IHoneypotService, HoneypotService>()
             .AddSingleton<FoxholeApiClient>()
+            .AddSingleton<IWarService, WarService>()
             .AddSingleton<DiscordSocketClient>()
             .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>(), _interactionServiceConfig))
             .AddSingleton<InteractionHandler>();

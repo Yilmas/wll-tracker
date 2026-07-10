@@ -16,7 +16,7 @@ namespace Dockhound.Services
         public VerificationHistoryService(IDbContextFactory<DockhoundContext> dbFactory)
             => _dbFactory = dbFactory;
 
-        public async Task LogApprovalAsync(ulong guildId, ulong userId, Faction faction, string? imageUrl, ulong? approvedByUserId, ulong? steam64Id, CancellationToken ct = default)
+        public async Task LogApprovalAsync(ulong guildId, ulong userId, Faction faction, string? imageUrl, ulong? approvedByUserId, ulong? steam64Id, string? warNumber, CancellationToken ct = default)
         {
             await using var db = await _dbFactory.CreateDbContextAsync(ct);
             db.VerificationRecords.Add(new VerificationRecord
@@ -27,7 +27,8 @@ namespace Dockhound.Services
                 ImageUrl = imageUrl,
                 ApprovedByUserId = approvedByUserId,
                 ApprovedAtUtc = DateTime.UtcNow,
-                Steam64Id = steam64Id
+                Steam64Id = steam64Id,
+                WarNumber = warNumber
             });
             await db.SaveChangesAsync(ct);
         }
@@ -40,7 +41,7 @@ namespace Dockhound.Services
                 .Where(v => v.UserId == userId)
                 .OrderByDescending(v => v.ApprovedAtUtc)
                 .Take(Math.Max(1, take))
-                .Select(v => new VerificationBrief(v.GuildId, v.Faction, v.ApprovedAtUtc))
+                .Select(v => new VerificationBrief(v.GuildId, v.Faction, v.ApprovedAtUtc, v.WarNumber))
                 .ToListAsync(ct);
 
             return items;
