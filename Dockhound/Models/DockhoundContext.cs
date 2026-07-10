@@ -20,6 +20,7 @@ public partial class DockhoundContext : DbContext
     public DbSet<Whiteboard> Whiteboards => Set<Whiteboard>();
     public DbSet<WhiteboardRole> WhiteboardRoles => Set<WhiteboardRole>();
     public DbSet<WhiteboardVersion> WhiteboardVersions => Set<WhiteboardVersion>();
+    public DbSet<War> Wars => Set<War>();
 
     public DockhoundContext() {}
 
@@ -67,6 +68,7 @@ public partial class DockhoundContext : DbContext
             e.ToTable("VerificationRecords");
             e.Property(x => x.Faction).HasMaxLength(32).IsRequired();
             e.Property(x => x.ImageUrl).HasColumnType("nvarchar(max)");
+            e.Property(x => x.WarNumber).HasMaxLength(16);
             e.HasIndex(x => new { x.UserId, x.ApprovedAtUtc });
             e.HasIndex(x => new { x.GuildId, x.ApprovedAtUtc });
         });
@@ -132,6 +134,16 @@ public partial class DockhoundContext : DbContext
             b.Property(x => x.NewLength).IsRequired();
             b.Property(x => x.EditDistance).IsRequired();
             b.Property(x => x.PercentChanged).HasColumnType("decimal(5,2)").IsRequired();
+        });
+        modelBuilder.Entity<War>(b =>
+        {
+            b.ToTable("Wars");
+            b.HasKey(x => x.WarId);
+            b.Property(x => x.WarId).HasMaxLength(64).ValueGeneratedNever();
+            b.Property(x => x.Winner).HasMaxLength(16).IsRequired();
+            b.Property(x => x.EntityTag).HasMaxLength(256);
+            b.Property(x => x.RefreshAfterUtc).IsRequired();
+            b.HasIndex(x => x.ConquestStartTime);
         });
     }
 

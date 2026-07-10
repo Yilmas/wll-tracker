@@ -17,5 +17,6 @@ namespace Dockhound.Models
         public ulong? ApprovedByUserId { get; set; }
         public DateTime ApprovedAtUtc { get; set; } = DateTime.UtcNow;
         public ulong? Steam64Id { get; set; }
+        public string? WarNumber { get; set; }
     }
 }

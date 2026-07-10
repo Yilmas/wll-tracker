@@ -31,12 +31,13 @@ namespace Dockhound.Interactions
         private readonly IGuildSettingsService _guildSettingsService;
         private readonly IVerificationHistoryService _verificationHistory;
         private readonly ISteamService _steamService;
+        private readonly IWarService _warService;
 
         private const int SteamHistoryTake = 5;
 
         private long seconds = (long)DateTime.UtcNow.Subtract(DateTime.UnixEpoch).TotalSeconds;
 
-        public VerificationInteraction(DockhoundContext dbContext, HttpClient httpClient, IConfiguration config, IGuildSettingsService guildSettingsService, IVerificationHistoryService verificationHistoryService, ISteamService steamService)
+        public VerificationInteraction(DockhoundContext dbContext, HttpClient httpClient, IConfiguration config, IGuildSettingsService guildSettingsService, IVerificationHistoryService verificationHistoryService, ISteamService steamService, IWarService warService)
         {
             _dbContext = dbContext;
             _httpClient = httpClient;
@@ -44,6 +45,7 @@ namespace Dockhound.Interactions
             _guildSettingsService = guildSettingsService;
             _verificationHistory = verificationHistoryService;
             _steamService = steamService;
+            _warService = warService;
         }
 
         // APPROVE
@@ -423,6 +425,15 @@ namespace Dockhound.Interactions
 
             // Build recent faction history (for the requester)
             var history = await _verificationHistory.GetTrackRecordAsync(Context.User.Id);
+            string? currentWarNumber = null;
+            try
+            {
+                currentWarNumber = await _warService.GetActiveWarNumberAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"[WARN] Failed to resolve current war for verification history: {e.Message}");
+            }
 
             var track = "_No previous approvals._";
             if (history.Count > 0)
@@ -431,7 +442,13 @@ namespace Dockhound.Interactions
                 foreach (var h in history)
                 {
                     var guildName = await _guildSettingsService.GetGuildDisplayNameAsync(h.GuildId) ?? $"Guild {h.GuildId}";
-                    lines.Add($"• {h.Faction} — <t:{new DateTimeOffset(h.ApprovedAtUtc).ToUnixTimeSeconds()}:R> — {guildName}");
+                    var warLabel = string.IsNullOrWhiteSpace(h.WarNumber) ? "Legacy" : $"WC{h.WarNumber}";
+                    var relativeTime = currentWarNumber is not null &&
+                                       currentWarNumber != "000" &&
+                                       currentWarNumber == h.WarNumber
+                        ? $" — <t:{new DateTimeOffset(h.ApprovedAtUtc).ToUnixTimeSeconds()}:R>"
+                        : string.Empty;
+                    lines.Add($"• {h.Faction} — {warLabel}{relativeTime} — {guildName}");
                 }
                 track = string.Join("\n", lines);
             }
@@ -788,6 +805,16 @@ namespace Dockhound.Interactions
             try
             {
                 var attachmentUrl = reviewMessage.Attachments.FirstOrDefault()?.Url;
+                string? warNumber = null;
+
+                try
+                {
+                    warNumber = await _warService.GetActiveWarNumberAsync();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"[WARN] Failed to resolve current war for verification approval: {e.Message}");
+                }
 
                 await _verificationHistory.LogApprovalAsync(
                     guildId: Context.Guild.Id,
@@ -795,7 +822,8 @@ namespace Dockhound.Interactions
                     faction: factionEnum,
                     imageUrl: attachmentUrl,
                     approvedByUserId: approvedByUserId,
-                    steam64Id: steam64Id
+                    steam64Id: steam64Id,
+                    warNumber: warNumber
                 );
             }
             catch (Exception e)

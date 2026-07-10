@@ -1,6 +1,12 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Dockhound.Config;
+using Dockhound.Interactions;
+using Dockhound.Logs;
+using Dockhound.Models;
+using Dockhound.Modules;
+using Dockhound.Services;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -8,12 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Diagnostics;
-using Dockhound.Logs;
-using Dockhound.Models;
-using Dockhound.Modules;
-using Dockhound.Interactions;
-using Dockhound.Config;
-using Dockhound.Services;
+using System.Net.Http;
 
 namespace Dockhound;
 
@@ -57,6 +58,7 @@ public class Program
             .Configure<AppSettings>(_configuration)
             .AddSingleton(_configuration)
             .AddSingleton(_socketConfig)
+            .AddLogging()
             .AddSingleton<HttpClient>()
             .AddDbContextFactory<DockhoundContext>(options => options.UseSqlServer(_configuration["Configuration:DatabaseConnectionString"])) 
             .AddMemoryCache()
@@ -66,9 +68,16 @@ public class Program
             .AddSingleton<IGuildSettingsService, GuildSettingsService>()
             .AddSingleton<IVerificationHistoryService, VerificationHistoryService>()
             .AddSingleton<IHoneypotService, HoneypotService>()
+            .AddSingleton<FoxholeApiClient>()
+            .AddSingleton<IWarService, WarService>()
             .AddSingleton<DiscordSocketClient>()
             .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>(), _interactionServiceConfig))
             .AddSingleton<InteractionHandler>();
+
+        services.AddHttpClient(nameof(FoxholeApiClient), client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(10);
+        });
 
         bool enableTelemetry = !string.IsNullOrEmpty(_configuration["Configuration:AppInsightsConnectionString"]);
 
