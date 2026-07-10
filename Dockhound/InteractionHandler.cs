@@ -214,7 +214,11 @@ public class InteractionHandler
 
             // Source embed (if any)
             var srcEmbed = message.Embeds?.FirstOrDefault();
-            var srcEb = srcEmbed?.ToEmbedBuilder();
+            // Discord-generated link previews are not Rich embeds and cannot be converted
+            // to an EmbedBuilder. Preserve the richer copy behavior for actual Rich embeds.
+            var srcEb = srcEmbed?.Type == EmbedType.Rich
+                ? srcEmbed.ToEmbedBuilder()
+                : null;
 
             // Description prefers message content; else embed description; else ZWSP
             string baseText = !string.IsNullOrWhiteSpace(message.Content)
