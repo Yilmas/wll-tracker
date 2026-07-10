@@ -202,7 +202,9 @@ namespace Dockhound.Interactions
             try
             {
                 var displayName = await _guildSettingsService.GetGuildDisplayNameAsync(Context.Guild.Id) ?? "the server";
-                await user.SendMessageAsync($"❌ Your verification for {displayName} has been denied.\n**Reason:** {modal.Reason}");
+                await user.SendMessageAsync(
+                    components: VerifyComponents.BuildDenialDmComponents(displayName, modal.Reason)
+                );
 
                 await FollowupAsync("Denial reason submitted and user has been notified.", ephemeral: true);
             }
@@ -841,14 +843,20 @@ namespace Dockhound.Interactions
                     Faction.Warden => cfg.Verify.WardenSecureChannelId is ulong wardenId ? Context.Guild.GetTextChannel(wardenId) : null,
                     _ => null
                 };
+                var factionLogoUrl = factionEnum switch
+                {
+                    Faction.Colonial => cfg.GuildLogoColonial,
+                    Faction.Warden => cfg.GuildLogoWarden,
+                    _ => null
+                };
 
                 var displayName = await _guildSettingsService.GetGuildDisplayNameAsync(Context.Guild.Id) ?? "";
 
                 await user.SendMessageAsync(
-                    $"✅ Your {displayName} verification has been approved! 🎉 " +
-                    (factionSecureChannel != null
-                        ? $"You now have access to faction-specific channels such as {factionSecureChannel.Mention}."
-                        : "Faction-specific channels are now available to you.")
+                    components: VerifyComponents.BuildApprovalDmComponents(
+                        displayName,
+                        factionSecureChannel,
+                        factionLogoUrl)
                 );
             }
             catch

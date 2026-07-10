@@ -10,6 +10,8 @@ namespace Dockhound.Config
     public sealed class GuildConfig
     {
         public int SchemaVersion { get; set; } = 1;
+        public string? GuildLogoColonial { get; set; }
+        public string? GuildLogoWarden { get; set; }
         public VerificationSettings Verify { get; set; } = new ();
         public List<RoleSet> Roles { get; set; } = new();
         public HoneypotSettings Honeypot { get; set; } = new();

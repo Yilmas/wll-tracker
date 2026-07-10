@@ -41,6 +41,66 @@ namespace Dockhound.Components
         }
 
         /// <summary>
+        /// Builds the Components V2 direct message sent after a verification is approved.
+        /// </summary>
+        public static MessageComponent BuildApprovalDmComponents(
+            string displayName,
+            ITextChannel? factionSecureChannel,
+            string? factionLogoUrl)
+        {
+            var guildName = string.IsNullOrWhiteSpace(displayName) ? "this server" : displayName;
+            var accessMessage = factionSecureChannel is not null
+                ? $"You now have access to faction-specific channels, such as:\n{factionSecureChannel.Mention}."
+                : "Faction-specific channels are now available to you.";
+            var approvalContainer = new ContainerBuilder()
+                .WithAccentColor(Color.DarkGreen);
+
+            if (!string.IsNullOrWhiteSpace(factionLogoUrl))
+            {
+                approvalContainer.WithSection(new SectionBuilder()
+                    .WithTextDisplay("## ✅ Verification approved")
+                    .WithTextDisplay($"Your verification for **{guildName}** has been approved!")
+                    .WithAccessory(new ThumbnailBuilder(
+                        new UnfurledMediaItemProperties(factionLogoUrl),
+                        "Faction logo")));
+            }
+            else
+            {
+                approvalContainer
+                    .WithTextDisplay("## ✅ Verification approved")
+                    .WithTextDisplay($"Your verification for **{guildName}** has been approved!");
+            }
+
+            approvalContainer
+                .WithSeparator()
+                .WithTextDisplay("### Secure Channels")
+                .WithTextDisplay(accessMessage);
+
+            return new ComponentBuilderV2()
+                .WithContainer(approvalContainer)
+                .Build();
+        }
+
+        /// <summary>
+        /// Builds the Components V2 direct message sent after a verification is denied.
+        /// </summary>
+        public static MessageComponent BuildDenialDmComponents(string displayName, string? reason)
+        {
+            var guildName = string.IsNullOrWhiteSpace(displayName) ? "this server" : displayName;
+            var denialReason = string.IsNullOrWhiteSpace(reason) ? "No reason was provided." : reason;
+
+            return new ComponentBuilderV2()
+                .WithContainer(new ContainerBuilder()
+                    .WithAccentColor(Color.Red)
+                    .WithTextDisplay("## ❌ Verification denied")
+                    .WithTextDisplay($"Your verification for **{guildName}** has been denied.")
+                    .WithSeparator()
+                    .WithTextDisplay("### Reason")
+                    .WithTextDisplay(denialReason))
+                .Build();
+        }
+
+        /// <summary>
         /// Build a verification review embed used for both manual and auto-approved posts.
         /// </summary>
         public static Embed BuildEmbed(string title, string description, string faction, ulong userId, string? steamProfile, string rolesToBeGranted, string? steamHistory, string factionHistory, Color color, string footer)

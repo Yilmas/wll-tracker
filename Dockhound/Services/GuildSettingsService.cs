@@ -22,7 +22,7 @@ namespace Dockhound.Services
 
         private static string CacheKey(ulong gid) => $"guildcfg:{gid}";
 
-        public const int SchemaVersionConst = 8;
+        public const int SchemaVersionConst = 9;
 
         public int CurrentSchemaVersion => SchemaVersionConst;
 
@@ -87,7 +87,11 @@ namespace Dockhound.Services
                 cfg.Honeypot.ReactionsEnabled = true;
                 cfg.SchemaVersion = 8;
             }
-            // future migrations: if (cfg.SchemaVersion < 9) { ...; cfg.SchemaVersion = 9; }
+            if (cfg.SchemaVersion < 9)
+            {
+                // Guild logo URLs are optional and remain null until configured.
+                cfg.SchemaVersion = 9;
+            }
         }
 
         public async Task<GuildConfig.RestrictedAccessSettings> GetRestrictedAccessAsync(ulong guildId, CancellationToken ct = default)
