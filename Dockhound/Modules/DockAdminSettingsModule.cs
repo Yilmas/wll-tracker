@@ -228,6 +228,21 @@ namespace Dockhound.Modules
                         .Build();
 
                     await FollowupAsync(embed: embed, ephemeral: true);
+
+                    if (Context.Guild != null && Context.Guild.SafetyAlertsChannel.Id is ulong modChannelId)
+                    {
+                        if (Context.Guild.GetChannel(modChannelId) is IMessageChannel modChannel)
+                        {
+                            var alertEmbed = new EmbedBuilder()
+                                .WithTitle("Guild Updated")
+                                .WithDescription($"Guild name or tag was updated by {Context.User.Mention}")
+                                .WithColor(Color.Orange)
+                                .WithCurrentTimestamp()
+                                .Build();
+
+                            await modChannel.SendMessageAsync(embed: alertEmbed);
+                        }
+                    }
                 }
 
                 [RequireUserPermission(GuildPermission.ViewAuditLog | GuildPermission.ManageMessages)]
